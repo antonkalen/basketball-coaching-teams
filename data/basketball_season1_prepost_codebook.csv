@@ -1,0 +1,63 @@
+variable,human_name,full_question
+participant_id,Coach,Coach
+staff,Stab,Stab
+coach_nr_years_head,Antal säsonger som headcoach,Hur många säsonger har du varit baskettränare?
+coach_nr_years_head_alone,Antal säsonger som headcoach utan ass coach,Hur många säsonger har du varit baskettränare med huvudansvar utan att ha assisterande tränare?
+coach_nr_years_head_with_ass,Antal säsonger som headcoach med ass coach,Hur många säsonger har du varit baskettränare med huvudansvar och haft assisterande tränare? 
+coach_nr_years_ass,Antal säsonger som ass coach,Hur många säsonger har du varit assisterande tränare till en annan huvudtränare? 
+coach_nr_years_shared_leadership,Antal säsonger med delat ledarskap,Hur många sästonger har du varit tränare i en stab med delat ledarskap?
+personality_neurotism_1,Jag ser mig själv som någon som oroar sig mycket.,Jag ser mig själv som någon som oroar sig mycket.
+personality_neurotism_2,Jag ser mig själv som någon som lätt blir nervös.,Jag ser mig själv som någon som lätt blir nervös.
+personality_neurotism_3,Jag ser mig själv som någon som förblir lugn i spända situationer.,Jag ser mig själv som någon som förblir lugn i spända situationer.
+personality_extrovert_1,Jag ser mig själv som någon som är pratsam,Jag ser mig själv som någon som är pratsam
+personality_extrovert_2,Jag ser mig själv som någon som är utåtriktad och sällskaplig.,Jag ser mig själv som någon som är utåtriktad och sällskaplig.
+personality_extrovert_3,Jag ser mig själv som någon som är reserverad.,Jag ser mig själv som någon som är reserverad.
+personality_openness_1,"Jag ser mig själv som någon som är originell, kommer med nya idéer.","Jag ser mig själv som någon som är originell, kommer med nya idéer."
+personality_openness_2,"Jag ser mig själv som någon som värdesätter konstnärliga, estetiska upplevelser.","Jag ser mig själv som någon som värdesätter konstnärliga, estetiska upplevelser."
+personality_openness_3,Jag ser mig själv som någon som har livlig fantasi.,Jag ser mig själv som någon som har livlig fantasi.
+personality_agreeableness_1,Jag ser mig själv som någon som tenderar att hitta fel hos andra.,Jag ser mig själv som någon som tenderar att hitta fel hos andra.
+personality_agreeableness_2,Jag ser mig själv som någon som har en förlåtande läggning.,Jag ser mig själv som någon som har en förlåtande läggning.
+personality_agreeableness_3,Jag ser mig själv som någon som är hjälpsam och osjälvisk mot andra.,Jag ser mig själv som någon som är hjälpsam och osjälvisk mot andra.
+personality_conscientiousness_1,Jag ser mig själv som någon som gör ett grundligt jobb.,Jag ser mig själv som någon som gör ett grundligt jobb.
+personality_conscientiousness_2,Jag ser mig själv som någon som tenderar att vara lat.,Jag ser mig själv som någon som tenderar att vara lat.
+personality_conscientiousness_3,Jag ser mig själv som någon som tenderar att göra saker effektivt.,Jag ser mig själv som någon som tenderar att göra saker effektivt.
+transformational_leadership,Transformational leadership
+transformational_leadership_1,Jag kommunicerar en tydlig positiv vision om framtiden,Jag kommunicerar en tydlig positiv vision om framtiden
+transformational_leadership_2,"Jag behandlar spelare och kollegor som individer, stöttar och uppmuntrar deras utveckling.","Jag behandlar spelare och kollegor som individer, stöttar och uppmuntrar deras utveckling."
+transformational_leadership_3,Jag uppmuntrar och ger erkännande till spelare och kollegor,Jag uppmuntrar och ger erkännande till spelare och kollegor
+transformational_leadership_4,"Jag premierar tillit, engagemang och samarbete hos mina lagmedlemmar. ","Jag premierar tillit, engagemang och samarbete hos mina lagmedlemmar. "
+transformational_leadership_5,Jag uppmuntrar att tänka på problem utifrån nya perspektiv och ifrågasätter gamla antaganden.,Jag uppmuntrar att tänka på problem utifrån nya perspektiv och ifrågasätter gamla antaganden.
+transformational_leadership_6,Jag är tydlig med mina värderingar och jag lever som jag lär. ,Jag är tydlig med mina värderingar och jag lever som jag lär. 
+transformational_leadership_7,Jag ger stolthet och respekt till andra och inspirerar genom min höga kompetens.,Jag ger stolthet och respekt till andra och inspirerar genom min höga kompetens.
+shared_leadership,Syn på delat ledarskap
+shared_leadership_1,Delat ansvar ökar möjligheten att utveckla varje spelare i landslaget,Delat ansvar ökar möjligheten att utveckla varje spelare i landslaget
+shared_leadership_2,Delat ansvar gör de individuella coacherna bättre.,Delat ansvar gör de individuella coacherna bättre
+shared_leadership_3,Delat ansvar kommer vara bra för utvecklingen av svensk basket.,Delat ansvar kommer vara bra för utvecklingen av svensk basket
+shared_leadership_4,Jag ser fram emot att arbeta med coacherna i min stab.,Jag ser fram emot att arbeta med coacherna i min stab.
+shared_leadership_5,Jag känner tillit till coacherna i min stab.,Jag känner tillit till coacherna i min stab.
+shared_leadership_6,Jag tycker att samarbetet i min stab fungerar bra,Jag tycker att samarbetet i min stab fungerar bra
+shared_leadership_7,Jag tycker att samarbetet staben gör att vi presterar bättre än vad vi hade gjort om vi hade arbetat individuellt.,Jag tycker att samarbetet staben har gjort att vi presterat bättre än vad vi hade gjort om vi hade arbetat individuellt.
+shared_leadership_8,Jag tycker att rollfördelningen i vår stab fungerar bra.,Jag tycker att rollfördelningen i vår stab har fungera bra.
+shared_leadership_9,Jag har hittat en roll som passar mig i min stab.,Jag har hittat en roll som passar mig i min stab.
+performance_training,Upplevd prestation på träning,På träning tycker jag att vi som lag presterar
+performance_training,Upplevd prestation på match,På match tycker jag att vi som lag presterar
+role,Roll i staben
+role_1,Min roll i staben är tydlig,Min roll i staben är tydlig
+role_2,Jag är nöjd med min roll i staben,Jag är nöjd med min roll i staben
+role_3,Rollfördelningen i staben fungerar bra för alla coacher,Rollfördelningen i staben fungerar bra för alla coacher
+collaboration,Samarbete i staben
+collaboration_1,Samarbetet i planering fungerar bra,Samarbetet i planering kommer fungera bra
+collaboration_2,Samarbetet i träning fungerar bra,Samarbetet i träning kommer fungera bra
+collaboration_3,Samarbetet i arbetet med spelarrelationer fungerar bra,Samarbetet i arbetet med spelarrelationer kommer fungera bra
+collaboration_4,Samarbetet i staben under match fungerar bra,Samarbetet i staben under match har fungerat bra
+psych_safety,Psykologisk trygghet
+psych_safety_1,Om man gör ett misstag i den här staben läggs det oftast en till last.,Om man gör ett misstag i den här staben läggs det oftast en till last.
+psych_safety_2,Coacherna i den här staben kan ta upp problem och svåra frågor.,Coacherna i den här staben kan ta upp problem och svåra frågor.
+psych_safety_3,Coacherna i det här teamet stöter ibland ut andra för att de är annorlunda,Coacherna i det här teamet stöter ibland ut andra för att de är annorlunda
+psych_safety_4,Det känns tryggt att ta risker i den här staben.,Det känns tryggt att ta risker i den här staben.
+psych_safety_5,Det är svårt att be andra coacher i staben om hjälp.,Det är svårt att be andra coacher i staben om hjälp.
+psych_safety_6,Ingen i den här staben skulle medvetet handla på ett sätt som undergräver mitt arbete.,Ingen i den här staben skulle medvetet handla på ett sätt som undergräver mitt arbete.
+psych_safety_7,I arbetet med spelare i den här staben värdesätter man mina unika förmågor och talanger och använder dem.,I arbetet med spelare i den här staben värdesätter man mina unika förmågor och talanger och använder dem.
+basic_needs_autonomy,I hur stor utsträckning upplever du att du får gehör för dina idéer i din stab?,I hur stor utsträckning upplever du att du får gehör för dina idéer i din stab?
+basic_needs_competence,I hur stor utsträckning upplever du att du har förmågan att vara en bra coach i din stab?,I hur stor utsträckning upplever du att du har förmågan att vara en bra coach i din stab?
+basic_needs_relatedness,I hur stor utsträckning upplever du en känsla av tillhörighet till staben?,I hur stor utsträckning upplever du en känsla av tillhörighet till staben?
