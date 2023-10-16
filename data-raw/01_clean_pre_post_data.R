@@ -2,14 +2,21 @@
 # Load packages -----------------------------------------------------------
 
 library(here)
+library(fs)
+library(purrr)
 library(readxl)
 library(readr)
 library(dplyr)
+library(stringr)
 
 
 # Load data ---------------------------------------------------------------
 
-raw_data <- read_excel(here("data-raw/basketball_season1_prepost.xlsx"))
+raw_data <- dir_ls(here("data-raw"), regexp = "[.]xlsx$") |> 
+  map(read_excel) |> 
+  bind_rows(.id = "season") |> 
+  mutate(season = str_extract(season, "[:digit:]{4}"))
+
 
 
 # Summarise measures ------------------------------------------------------
@@ -33,42 +40,52 @@ calculated_data <- reversed_data |>
     .after = coach_nr_years_shared_leadership,
     
     # Big 5 personality
-    personality_neurotism = rowMeans(across(starts_with("personality_neurotism"))),
-    personality_extrovert = rowMeans(across(starts_with("personality_extrovert"))),
-    personality_openness = rowMeans(across(starts_with("personality_openness"))),
-    personality_agreeableness = rowMeans(across(starts_with("personality_agreeableness"))),
-    personality_conscientiousness = rowMeans(across(starts_with("personality_conscientiousness"))),
+    personality_neurotism = rowMeans(pick(starts_with("personality_neurotism"))),
+    personality_extrovert = rowMeans(pick(starts_with("personality_extrovert"))),
+    personality_openness = rowMeans(pick(starts_with("personality_openness"))),
+    personality_agreeableness = rowMeans(pick(starts_with("personality_agreeableness"))),
+    personality_conscientiousness = rowMeans(pick(starts_with("personality_conscientiousness"))),
     
     # Transformational leadership
-    transformational_leadership = rowMeans(across(starts_with("transformational_leadership"))),
+    transformational_leadership = rowMeans(pick(starts_with("transformational_leadership"))),
     
     # Shared leadership
-    shared_leadership = rowMeans(
-      across(
+    shared_leadership_model = rowMeans(
+      pick(
         c(
           shared_leadership_1, 
           shared_leadership_2, 
-          shared_leadership_3,
-          shared_leadership_4, 
-          shared_leadership_5
+          shared_leadership_3
         )
       )
     ),
     
-    # Roles
-    role = rowMeans(across(starts_with("role"))),
+    shared_leadership_collaboration = rowMeans(
+      pick(
+        c(
+          shared_leadership_4, 
+          shared_leadership_5, 
+          shared_leadership_6
+        )
+      )
+    ),
     
-    # Collaboration
-    collaboration = rowMeans(
-      across(c(starts_with("collaboration"), -collaboration_4))
+    shared_leadership_roles = rowMeans(
+      pick(
+        c(
+          shared_leadership_7, 
+          shared_leadership_8, 
+          shared_leadership_9
+        )
+      )
     ),
     
     # Psychological safety
-    psych_safety = rowMeans(across(starts_with("psych_safety"))),
+    psych_safety = rowMeans(pick(starts_with("psych_safety"))),
   )
 
 
 
 # Write clean data --------------------------------------------------------
 
-write_csv(calculated_data, here("data/season1_prepost.csv"))
+write_csv(calculated_data, here("data/prepost.csv"))

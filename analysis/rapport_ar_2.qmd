@@ -1,0 +1,424 @@
+---
+title: "Delat ledarskap"
+subtitle: "Utvärdering år 2"
+author: 
+  - Alexandra Pérez Ferreirós
+  - Erik Lundkvist
+  - Anton Kalén
+date: today
+
+execute:
+  echo: false
+  warning: false
+  
+format: html
+---
+
+```{r}
+#| label: setup
+
+
+# Load packages -----------------------------------------------------------
+
+library(here)
+library(readr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(forcats)
+library(tidytext)
+library(hrbrthemes)
+library(forcats)
+library(knitr)
+
+
+# Set parameters ----------------------------------------------------------
+
+theme_set(
+  theme_ipsum(
+    axis = FALSE,
+    grid = FALSE,
+    grid_col = "Gray50",
+    plot_margin = margin(5, 5, 5, 5),
+    base_size = 14,
+    strip_text_size = 20,
+    subtitle_size = 20,
+    subtitle_margin = 0
+  ) +
+  theme(
+    panel.border = element_rect(color = "Gray50", fill = NA),
+    strip.text = element_text(vjust = 0, margin = margin(0,0,5,0)),
+    panel.spacing.x = unit(1.5, "lines"),
+    panel.spacing.y = unit(1.5, "lines"),
+  )
+)
+
+## Color scale
+col_scale <- c("Höjning" = "#1b9e77", "Samma" = "#7570b3", "Sänkning" = "#d95f02")
+
+
+# Read data ----
+pre_post_data_raw <- read_csv(here("data/prepost.csv"))
+
+data_dict <- read_csv(here("data/basketball_season1_prepost_codebook.csv")) |> 
+  select(human_name, variable) |> 
+  tibble::deframe()
+
+# Prepare data ----
+
+
+## Post data ----
+post_data <- pre_post_data_raw |> 
+  filter(time == "post") |> 
+  drop_na(psych_safety) |> 
+  group_by(staff) |> 
+  filter(n() > 1)
+
+
+## Change data ----
+
+pre_post_data_clean <- pre_post_data_raw |> 
+  arrange(season, participant_id, desc(time)) |> 
+  mutate(
+    time = factor(time, levels = c("pre", "post"), labels = c("Före", "Efter")),
+    season = factor(season, ordered = TRUE),
+  ) |> 
+  # group_by(participant_id) |> 
+  # mutate(
+  #   across(
+  #     where(is.numeric),
+  #     \(x) if_else(any(is.na(x)) == 1, NA, last(x) - first(x)),
+  #     .names = "{.col}_change"
+  #   ),
+  #   across(
+  #     where(is.numeric),
+  #     \(x) {
+  #       case_when(
+  #         between(x, -1, 1) ~ "Samma",
+  #         x >= 1 ~ "Höjning",
+  #         x <= 1 ~ "Sänkning"
+  #       )
+  #     },
+  #     .names = "{.col}_cat"
+  #   )
+  # ) |> 
+  select(where(~!all(is.na(.x)))) |> 
+  ungroup()
+
+```
+
+# Metod
+
+Number of participating coaches:
+
+```{r}
+pre_post_data_clean |> 
+  drop_na(shared_leadership_1) |> 
+  group_by(season, participant_id) |>
+  summarise(
+    before = "Före" %in% time,
+    after = "Efter" %in% time,
+    both = n() == 2,
+    .groups = "drop_last"
+  ) |> 
+  summarise(across(where(is.logical), sum)) |> 
+  kable()
+```
+
+
+# Resultat
+
+## Upplevelse av säsongen
+
+```{r}
+# 
+# pre_post_data_clean |> 
+#   pivot_longer(c(starts_with("performance"), general_experience, -contains("change"))) |> 
+#   ggplot(aes(x = season, y = value)) +
+#     geom_point()
+
+```
+
+
+## Syn på delat ledarskap
+
+```{r}
+shared_leadership_data <- pre_post_data_clean |> 
+  pivot_longer(c(starts_with("shared_leadership"), -contains("change"))) |> 
+  pivot_wider(id_cols = c(season, name, participant_id), names_from = time, values_from = value) |> 
+  mutate(
+    Förändring = `Efter` - `Före`,
+    Förbättring = Förändring >= 1,
+    `Ingen förändring` = Förändring > -1 & Förändring < 1,
+    Försämring = Förändring <= -1,
+    name = factor(
+      name,
+      levels = c(
+        "shared_leadership_1",
+        "shared_leadership_2",
+        "shared_leadership_3",
+        "shared_leadership_model",
+        "shared_leadership_4", 
+        "shared_leadership_5",
+        "shared_leadership_6",
+        "shared_leadership_collaboration",
+        "shared_leadership_7",
+        "shared_leadership_8",
+        "shared_leadership_9",
+        "shared_leadership_roles"
+      ),
+      labels = c(
+        "Delat ansvar ökar möjligheten att utveckla varje spelare i landslaget",
+        "Delat ansvar gör de individuella coacherna bättre",
+        "Delat ansvar kommer vara bra för utvecklingen av svensk basket",
+        "**Syn på delat ledarskapsmodellen**",
+        "Jag ser fram emot att arbeta med coacherna i min stab",
+        "Jag känner tillit till coacherna i min stab",
+        "Jag tycker att samarbetet i min stab fungerar bra",
+        "**Syn på det delade ledarskapet i staben**",
+        "Jag tycker att samarbetet i staben gör att vi presterar bättre än vad vi hade gjort om vi hade arbetat individuellt",
+        "Jag tycker att rollfördelningen i vår stab fungerar bra",
+        "Jag har hittat en roll som passar mig i min stab",
+        "**Syn på rollfördelning i staben**"
+      )
+    )
+  ) |> 
+  group_by(name, season) |> 
+  summarise(
+    across(
+      where(is.numeric), 
+      ~paste(
+        formatC(mean(.x, na.rm = TRUE), 1, format = "f"), 
+        "±", 
+        formatC(sd(.x, na.rm = TRUE), 1, format = "f")
+      )
+    ),
+    across(
+      where(is.logical),
+      ~paste0(
+        sum(.x, na.rm = TRUE),
+        " (",
+        round(100 * mean(.x, na.rm = TRUE)),
+        "%)"
+      )
+    ),
+    .groups = "drop"
+  ) |> 
+  pivot_wider(
+    id_cols = name, 
+    names_from = season, 
+    values_from = c(-name, -season),
+    names_vary = "slowest"
+  )
+
+shared_leadership_data |> 
+  slice(1:4) |> 
+  kable()
+```
+
+## Roll i staben
+
+```{r}
+shared_leadership_data |> 
+  slice(9:12) |> 
+  kable()
+```
+
+
+## Samarbete i staben
+
+```{r}
+shared_leadership_data |> 
+  slice(5:8) |> 
+  kable()
+```
+
+## Psykologisk trygghet
+
+```{r}
+psych_safety_data <- pre_post_data_clean |> 
+  pivot_longer(c(starts_with("psych_safety"), -contains("change"))) |> 
+  pivot_wider(id_cols = c(season, name, participant_id), names_from = time, values_from = value) |> 
+  mutate(
+    Förändring = `Efter` - `Före`,
+    Förbättring = Förändring >= 1,
+    `Ingen förändring` = Förändring > -1 & Förändring < 1,
+    Försämring = Förändring <= -1,
+    name = factor(
+      name,
+      levels = c(
+        "psych_safety_1",
+        "psych_safety_2",
+        "psych_safety_3",
+        "psych_safety_4",
+        "psych_safety_5", 
+        "psych_safety_6",
+        "psych_safety_7",
+        "psych_safety"
+      ),
+      labels = c(
+        "Om man gör ett misstag i den här staben läggs det oftast en till last (omvänd)",
+        "Coacherna i den här staben kan ta upp problem och svåra frågor",
+        "Coacherna i det här teamet stöter ibland ut andra för att de är annorlunda",
+        "Det känns tryggt att ta risker i den här staben",
+        "Det är svårt att be andra coacher i staben om hjälp",
+        "Ingen i den här staben skulle medvetet handla på ett sätt som undergräver mitt arbete",
+        "I arbetet med spelare i den här staben värdesätter man mina unika förmågor och talanger och använder dem",
+        "**Psykologisk trygghet**"
+      )
+    )
+  )
+
+psych_safety_data |> 
+  group_by(name, season) |> 
+  summarise(
+    across(
+      where(is.numeric), 
+      ~paste(
+        formatC(mean(.x, na.rm = TRUE), 1, format = "f"), 
+        "±", 
+        formatC(sd(.x, na.rm = TRUE), 1, format = "f")
+      )
+    ),
+    across(
+      where(is.logical),
+      ~paste0(
+        sum(.x, na.rm = TRUE),
+        " (",
+        round(100 * mean(.x, na.rm = TRUE)),
+        "%)"
+      )
+    )
+  ) |> 
+  pivot_wider(
+    id_cols = name, 
+    names_from = season, 
+    values_from = c(-name, -season),
+    names_vary = "slowest"
+  ) |> 
+  kable()
+```
+
+
+## Transformellt ledarskap
+
+```{r}
+transformational_leadership_data <- pre_post_data_clean |> 
+  pivot_longer(c(starts_with("transformational_leadership"), -contains("change"))) |> 
+  pivot_wider(id_cols = c(season, name, participant_id), names_from = time, values_from = value) |> 
+  mutate(
+    Förändring = `Efter` - `Före`,
+    Förbättring = Förändring >= 1,
+    `Ingen förändring` = Förändring > -1 & Förändring < 1,
+    Försämring = Förändring <= -1,
+    name = factor(
+      name,
+      levels = c(
+        "transformational_leadership_1",
+        "transformational_leadership_2",
+        "transformational_leadership_3",
+        "transformational_leadership_4",
+        "transformational_leadership_5", 
+        "transformational_leadership_6",
+        "transformational_leadership_7",
+        "transformational_leadership"
+      ),
+      labels = c(
+        "Jag kommunicerar en tydlig positiv vision om framtiden",
+        "Jag behandlar spelare och kollegor som individer, stöttar och uppmuntrar deras utveckling",
+        "Jag uppmuntrar och ger erkännande till spelare och kollegor",
+        "Jag premierar tillit, engagemang och samarbete hos mina lagmedlemmar",
+        "Jag uppmuntrar att tänka på problem utifrån nya perspektiv och ifrågasätter gamla antaganden",
+        "Jag är tydlig med mina värderingar och jag lever som jag lär",
+        "Jag ger stolthet och respekt till andra och inspirerar genom min höga kompetens",
+        "**Transformellt ledarskap**"
+      )
+    )
+  )
+
+transformational_leadership_data |> 
+  group_by(name, season) |> 
+  summarise(
+    across(
+      where(is.numeric), 
+      ~paste(
+        formatC(mean(.x, na.rm = TRUE), 1, format = "f"), 
+        "±", 
+        formatC(sd(.x, na.rm = TRUE), 1, format = "f")
+      )
+    ),
+    across(
+      where(is.logical),
+      ~paste0(
+        sum(.x, na.rm = TRUE),
+        " (",
+        round(100 * mean(.x, na.rm = TRUE)),
+        "%)"
+      )
+    )
+  ) |> 
+  pivot_wider(
+    id_cols = name, 
+    names_from = season, 
+    values_from = c(-name, -season),
+    names_vary = "slowest"
+  ) |> 
+  kable()
+```
+
+
+## Människans grundläggande behov
+
+```{r}
+basic_needs_data <- pre_post_data_clean |> 
+  pivot_longer(c(starts_with("basic_needs"), -contains("change"))) |> 
+  pivot_wider(id_cols = c(season, name, participant_id), names_from = time, values_from = value) |> 
+  mutate(
+    Förändring = `Efter` - `Före`,
+    Förbättring = Förändring >= 1,
+    `Ingen förändring` = Förändring > -1 & Förändring < 1,
+    Försämring = Förändring <= -1,
+    name = factor(
+      name,
+      levels = c(
+        "basic_needs_autonomy",
+        "basic_needs_competence",
+        "basic_needs_relatedness"
+      ),
+      labels = c(
+        "Upplevd autonomi",
+        "Upplevd kompetens",
+        "Upplevd tillhörighet"
+      )
+    )
+  )
+
+basic_needs_data |> 
+  group_by(name, season) |> 
+  summarise(
+    across(
+      where(is.numeric), 
+      ~paste(
+        formatC(mean(.x, na.rm = TRUE), 1, format = "f"), 
+        "±", 
+        formatC(sd(.x, na.rm = TRUE), 1, format = "f")
+      )
+    ),
+    across(
+      where(is.logical),
+      ~paste0(
+        sum(.x, na.rm = TRUE),
+        " (",
+        round(100 * mean(.x, na.rm = TRUE)),
+        "%)"
+      )
+    )
+  ) |> 
+  pivot_wider(
+    id_cols = name, 
+    names_from = season, 
+    values_from = c(-name, -season),
+    names_vary = "slowest"
+  ) |> 
+  kable()
+```
