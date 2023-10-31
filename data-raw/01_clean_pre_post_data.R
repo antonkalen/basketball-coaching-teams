@@ -50,6 +50,14 @@ calculated_data <- reversed_data |>
     transformational_leadership = rowMeans(pick(starts_with("transformational_leadership"))),
     
     # Shared leadership
+    
+    ## Convert 6 scaled in 2023 to 5 scaled
+    
+    across(
+      starts_with("shared_leadership"),
+      \(x) if_else(season == 2023, (x-1)*(4/5)+1, x)
+    ),
+    
     shared_leadership_model = rowMeans(
       pick(
         c(

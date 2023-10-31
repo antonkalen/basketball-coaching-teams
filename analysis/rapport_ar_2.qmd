@@ -11,7 +11,10 @@ execute:
   echo: false
   warning: false
   
-format: html
+format:
+  html:
+    toc: true
+    self-contained: true
 ---
 
 ```{r}
@@ -30,6 +33,7 @@ library(tidytext)
 library(hrbrthemes)
 library(forcats)
 library(knitr)
+library(ggtext)
 
 
 # Set parameters ----------------------------------------------------------
@@ -39,22 +43,29 @@ theme_set(
     axis = FALSE,
     grid = FALSE,
     grid_col = "Gray50",
-    plot_margin = margin(5, 5, 5, 5),
-    base_size = 14,
-    strip_text_size = 20,
-    subtitle_size = 20,
-    subtitle_margin = 0
+    plot_margin = margin(2, 2, 2, 2),
+    base_size = 8,
+    strip_text_size = 10,
+    subtitle_size = 10,
+    subtitle_margin = 0,
+    ticks = TRUE
   ) +
   theme(
     panel.border = element_rect(color = "Gray50", fill = NA),
-    strip.text = element_text(vjust = 0, margin = margin(0,0,5,0)),
-    panel.spacing.x = unit(1.5, "lines"),
-    panel.spacing.y = unit(1.5, "lines"),
+    panel.spacing.x = unit(.5, "lines"),
+    panel.spacing.y = unit(1, "lines"),
+    strip.text = element_textbox_simple(
+        vjust = 0,
+        margin = margin(3.5,0,0,0, unit = "lines")
+      ),
+    aspect.ratio = 1
   )
 )
 
 ## Color scale
-col_scale <- c("Höjning" = "#1b9e77", "Samma" = "#7570b3", "Sänkning" = "#d95f02")
+col_scale <- RColorBrewer::brewer.pal(3, "Dark2")[c(1, 3)]
+names(col_scale) <- c("2022", "2023")
+
 
 
 # Read data ----
@@ -63,17 +74,6 @@ pre_post_data_raw <- read_csv(here("data/prepost.csv"))
 data_dict <- read_csv(here("data/basketball_season1_prepost_codebook.csv")) |> 
   select(human_name, variable) |> 
   tibble::deframe()
-
-# Prepare data ----
-
-
-## Post data ----
-post_data <- pre_post_data_raw |> 
-  filter(time == "post") |> 
-  drop_na(psych_safety) |> 
-  group_by(staff) |> 
-  filter(n() > 1)
-
 
 ## Change data ----
 
@@ -145,7 +145,7 @@ pre_post_data_clean |>
 ```{r}
 shared_leadership_data <- pre_post_data_clean |> 
   pivot_longer(c(starts_with("shared_leadership"), -contains("change"))) |> 
-  pivot_wider(id_cols = c(season, name, participant_id), names_from = time, values_from = value) |> 
+  pivot_wider(id_cols = c(season, name, staff, participant_id), names_from = time, values_from = value) |> 
   mutate(
     Förändring = `Efter` - `Före`,
     Förbättring = Förändring >= 1,
@@ -175,14 +175,16 @@ shared_leadership_data <- pre_post_data_clean |>
         "Jag ser fram emot att arbeta med coacherna i min stab",
         "Jag känner tillit till coacherna i min stab",
         "Jag tycker att samarbetet i min stab fungerar bra",
-        "**Syn på det delade ledarskapet i staben**",
+        "**Syn på sammarbetet i staben**",
         "Jag tycker att samarbetet i staben gör att vi presterar bättre än vad vi hade gjort om vi hade arbetat individuellt",
         "Jag tycker att rollfördelningen i vår stab fungerar bra",
         "Jag har hittat en roll som passar mig i min stab",
         "**Syn på rollfördelning i staben**"
       )
     )
-  ) |> 
+  )
+
+shared_leadership_summarized_data <- shared_leadership_data |> 
   group_by(name, season) |> 
   summarise(
     across(
@@ -211,10 +213,69 @@ shared_leadership_data <- pre_post_data_clean |>
     names_vary = "slowest"
   )
 
-shared_leadership_data |> 
+shared_leadership_summarized_data |> 
   slice(1:4) |> 
   kable()
 ```
+
+```{r}
+shared_leadership_view_data <- shared_leadership_data |>
+  filter(
+    name %in% c(
+      "Delat ansvar ökar möjligheten att utveckla varje spelare i landslaget",
+      "Delat ansvar gör de individuella coacherna bättre",
+      "Delat ansvar kommer vara bra för utvecklingen av svensk basket",
+      "**Syn på delat ledarskapsmodellen**"
+    )
+  )
+
+
+shared_leadership_view_order <- shared_leadership_view_data |> 
+  summarise(
+    mean = mean(Efter, na.rm = TRUE),
+    max = max(Efter, na.rm = TRUE),
+    .by = c(season, staff)
+  ) |> 
+  arrange(season, desc(mean), desc(max)) |> 
+  mutate(
+    staff_2 = paste(season, staff),
+    staff_2 = fct_inorder(staff_2)
+  )
+
+
+shared_leadership_view_data |>
+  drop_na(Efter) |> 
+  group_by(season, staff, name) |> 
+  filter(n_distinct(participant_id) >= 2) |> 
+  summarise(
+    y = mean(Efter),
+    ymin = min(Efter),
+    ymax = max(Efter),
+    .groups = "drop"
+  ) |> 
+  left_join(shared_leadership_view_order, by = join_by(season, staff)) |> 
+  ggplot(aes(x = season, y = y, group = staff_2, color = season)) +
+    geom_linerange(
+      aes(ymin = ymin, ymax = ymax), 
+      position = position_dodge2(width = 0.8, preserve = "single"),
+      linewidth = 1.8,
+      alpha = .5
+    ) +
+    geom_point(position = position_dodge2(width = 0.8, preserve = "single")) +
+    facet_wrap(~name, ncol = 4) +
+    scale_color_manual(values = col_scale, guide = NULL) +
+    labs(x = NULL, y = NULL)
+
+ggsave(
+  here("output/shared_leadership.tiff"),
+  compression = "lzw+p",
+  width = 16,
+  height = 6,
+  units = "cm"
+)
+  
+```
+
 
 ## Roll i staben
 
@@ -224,6 +285,62 @@ shared_leadership_data |>
   kable()
 ```
 
+```{r}
+role_data <- shared_leadership_data |>
+  filter(
+    name %in% c(
+      "Jag tycker att samarbetet i staben gör att vi presterar bättre än vad vi hade gjort om vi hade arbetat individuellt",
+      "Jag tycker att rollfördelningen i vår stab fungerar bra",
+      "Jag har hittat en roll som passar mig i min stab",
+      "**Syn på rollfördelning i staben**"
+    )
+  )
+
+role_order <- role_data |> 
+  summarise(
+    mean = mean(Efter, na.rm = TRUE),
+    max = max(Efter, na.rm = TRUE),
+    .by = c(season, staff)
+  ) |> 
+  arrange(season, desc(mean), desc(max)) |> 
+  mutate(
+    staff_2 = paste(season, staff),
+    staff_2 = fct_inorder(staff_2)
+  )
+
+
+role_data |>
+  drop_na(Efter) |> 
+  group_by(season, staff, name) |> 
+  filter(n_distinct(participant_id) >= 2) |> 
+  summarise(
+    y = mean(Efter),
+    ymin = min(Efter),
+    ymax = max(Efter),
+    .groups = "drop"
+  ) |> 
+  left_join(role_order, by = join_by(season, staff)) |> 
+  ggplot(aes(x = season, y = y, group = staff_2, color = season)) +
+    geom_linerange(
+      aes(ymin = ymin, ymax = ymax), 
+      position = position_dodge2(width = 0.8, preserve = "single"),
+      linewidth = 1.8,
+      alpha = .5
+    ) +
+    geom_point(position = position_dodge2(width = 0.8, preserve = "single")) +
+    facet_wrap(~name, ncol = 4) +
+    scale_color_manual(values = col_scale, guide = NULL) +
+    labs(x = NULL, y = NULL)
+
+ggsave(
+  here("output/role.tiff"),
+  compression = "lzw+p",
+  width = 16,
+  height = 6,
+  units = "cm"
+)
+  
+```
 
 ## Samarbete i staben
 
@@ -233,12 +350,69 @@ shared_leadership_data |>
   kable()
 ```
 
+```{r}
+collaboration_data <- shared_leadership_data |>
+  filter(
+    name %in% c(
+      "Jag ser fram emot att arbeta med coacherna i min stab",
+      "Jag känner tillit till coacherna i min stab",
+      "Jag tycker att samarbetet i min stab fungerar bra",
+      "**Syn på sammarbetet i staben**"
+    )
+  )
+
+collaboration_order <- collaboration_data |> 
+  summarise(
+    mean = mean(Efter, na.rm = TRUE),
+    max = max(Efter, na.rm = TRUE),
+    .by = c(season, staff)
+  ) |> 
+  arrange(season, desc(mean), desc(max)) |> 
+  mutate(
+    staff_2 = paste(season, staff),
+    staff_2 = fct_inorder(staff_2)
+  )
+
+
+collaboration_data |>
+  drop_na(Efter) |> 
+  group_by(season, staff, name) |> 
+  filter(n_distinct(participant_id) >= 2) |> 
+  summarise(
+    y = mean(Efter),
+    ymin = min(Efter),
+    ymax = max(Efter),
+    .groups = "drop"
+  ) |> 
+  left_join(collaboration_order, by = join_by(season, staff)) |> 
+  ggplot(aes(x = season, y = y, group = staff_2, color = season)) +
+    geom_linerange(
+      aes(ymin = ymin, ymax = ymax), 
+      position = position_dodge2(width = 0.8, preserve = "single"),
+      linewidth = 1.8,
+      alpha = .5
+    ) +
+    geom_point(position = position_dodge2(width = 0.8, preserve = "single")) +
+    facet_wrap(~name, ncol = 4) +
+    scale_color_manual(values = col_scale, guide = NULL) +
+    labs(x = NULL, y = NULL)
+
+ggsave(
+  here("output/collaboration.tiff"),
+  compression = "lzw+p",
+  width = 16,
+  height = 6,
+  units = "cm"
+)
+  
+```
+
 ## Psykologisk trygghet
 
 ```{r}
 psych_safety_data <- pre_post_data_clean |> 
   pivot_longer(c(starts_with("psych_safety"), -contains("change"))) |> 
-  pivot_wider(id_cols = c(season, name, participant_id), names_from = time, values_from = value) |> 
+  pivot_wider(id_cols = c(season, staff, name, participant_id), names_from = time, values_from = value) |> 
   mutate(
     Förändring = `Efter` - `Före`,
     Förbättring = Förändring >= 1,
@@ -299,13 +473,59 @@ psych_safety_data |>
   kable()
 ```
 
+```{r}
+psych_safety_order <- psych_safety_data |> 
+  summarise(
+    mean = mean(Efter, na.rm = TRUE),
+    max = max(Efter, na.rm = TRUE),
+    .by = c(season, staff)
+  ) |> 
+  arrange(season, desc(mean), desc(max)) |> 
+  mutate(
+    staff_2 = paste(season, staff),
+    staff_2 = fct_inorder(staff_2)
+  )
+
+
+psych_safety_data |>
+  drop_na(Efter) |> 
+  group_by(season, staff, name) |> 
+  filter(n_distinct(participant_id) >= 2) |> 
+  summarise(
+    y = mean(Efter),
+    ymin = min(Efter),
+    ymax = max(Efter),
+    .groups = "drop"
+  ) |> 
+  left_join(psych_safety_order, by = join_by(season, staff)) |> 
+  ggplot(aes(x = season, y = y, group = staff_2, color = season)) +
+    geom_linerange(
+      aes(ymin = ymin, ymax = ymax), 
+      position = position_dodge2(width = 0.8, preserve = "single"),
+      linewidth = 1.8,
+      alpha = .5
+    ) +
+    geom_point(position = position_dodge2(width = 0.8, preserve = "single")) +
+    facet_wrap(~name, ncol = 4) +
+    scale_color_manual(values = col_scale, guide = NULL) +
+    labs(x = NULL, y = NULL)
+
+ggsave(
+  here("output/psych_safety.tiff"),
+  compression = "lzw+p",
+  width = 16,
+  height = 12,
+  units = "cm"
+)
+  
+```
 
 ## Transformellt ledarskap
 
 ```{r}
 transformational_leadership_data <- pre_post_data_clean |> 
   pivot_longer(c(starts_with("transformational_leadership"), -contains("change"))) |> 
-  pivot_wider(id_cols = c(season, name, participant_id), names_from = time, values_from = value) |> 
+  pivot_wider(id_cols = c(season, staff, name, participant_id), names_from = time, values_from = value) |> 
   mutate(
     Förändring = `Efter` - `Före`,
     Förbättring = Förändring >= 1,
@@ -366,13 +586,59 @@ transformational_leadership_data |>
   kable()
 ```
 
+```{r}
+transformational_leadership_order <- transformational_leadership_data |> 
+  summarise(
+    mean = mean(Efter, na.rm = TRUE),
+    max = max(Efter, na.rm = TRUE),
+    .by = c(season, staff)
+  ) |> 
+  arrange(season, desc(mean), desc(max)) |> 
+  mutate(
+    staff_2 = paste(season, staff),
+    staff_2 = fct_inorder(staff_2)
+  )
+
+transformational_leadership_data |>
+  drop_na(Efter) |> 
+  group_by(season, staff, name) |> 
+  filter(n_distinct(participant_id) >= 2) |> 
+  summarise(
+    y = mean(Efter),
+    ymin = min(Efter),
+    ymax = max(Efter),
+    .groups = "drop"
+  ) |> 
+  left_join(transformational_leadership_order, by = join_by(season, staff)) |> 
+  ggplot(aes(x = season, y = y, group = staff_2, color = season)) +
+    geom_linerange(
+      aes(ymin = ymin, ymax = ymax), 
+      position = position_dodge2(width = 0.8, preserve = "single"),
+      linewidth = 1.8,
+      alpha = .5
+    ) +
+    geom_point(position = position_dodge2(width = 0.8, preserve = "single")) +
+    facet_wrap(~name, ncol = 4) +
+    scale_color_manual(values = col_scale, guide = NULL) +
+    labs(x = NULL, y = NULL)
+
+ggsave(
+  here("output/transformational_leadership.tiff"),
+  compression = "lzw+p",
+  width = 16,
+  height = 12,
+  units = "cm"
+)
+  
+```
+
 
 ## Människans grundläggande behov
 
 ```{r}
 basic_needs_data <- pre_post_data_clean |> 
   pivot_longer(c(starts_with("basic_needs"), -contains("change"))) |> 
-  pivot_wider(id_cols = c(season, name, participant_id), names_from = time, values_from = value) |> 
+  pivot_wider(id_cols = c(season, staff, name, participant_id), names_from = time, values_from = value) |> 
   mutate(
     Förändring = `Efter` - `Före`,
     Förbättring = Förändring >= 1,
@@ -421,4 +687,50 @@ basic_needs_data |>
     names_vary = "slowest"
   ) |> 
   kable()
+```
+
+```{r}
+basic_needs_order <- basic_needs_data |> 
+  summarise(
+    mean = mean(Efter, na.rm = TRUE),
+    max = max(Efter, na.rm = TRUE),
+    .by = c(season, staff)
+  ) |> 
+  arrange(season, desc(mean), desc(max)) |> 
+  mutate(
+    staff_2 = paste(season, staff),
+    staff_2 = fct_inorder(staff_2)
+  )
+
+basic_needs_data |>
+  drop_na(Efter) |> 
+  group_by(season, staff, name) |> 
+  filter(n_distinct(participant_id) >= 2) |> 
+  summarise(
+    y = mean(Efter),
+    ymin = min(Efter),
+    ymax = max(Efter),
+    .groups = "drop"
+  ) |> 
+  left_join(basic_needs_order, by = join_by(season, staff)) |> 
+  ggplot(aes(x = season, y = y, group = staff_2, color = season)) +
+    geom_linerange(
+      aes(ymin = ymin, ymax = ymax), 
+      position = position_dodge2(width = 0.8, preserve = "single"),
+      linewidth = 1.8,
+      alpha = .5
+    ) +
+    geom_point(position = position_dodge2(width = 0.8, preserve = "single")) +
+    facet_wrap(~name, ncol = 4) +
+    scale_color_manual(values = col_scale, guide = NULL) +
+    labs(x = NULL, y = NULL)
+
+ggsave(
+  here("output/basic_needs.tiff"),
+  compression = "lzw+p",
+  width = 16,
+  height = 6,
+  units = "cm"
+)
+  
 ```
